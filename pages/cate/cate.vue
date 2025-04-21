@@ -1,4 +1,5 @@
 <template>
+	<my-search @click="searchHandler"></my-search>
 	<view>
 		<view class="scroll-view-container">
 			<!-- 左侧一级分类 -->
@@ -49,7 +50,7 @@
 		},
 		onLoad() {
 			const sysInfo = uni.getSystemInfoSync()
-			this.wh = sysInfo.windowHeight
+			this.wh = sysInfo.windowHeight - 50
 			this.getCateList()
 		},
 		methods: {
@@ -69,6 +70,11 @@
 			goGoodsList (item3) {
 				uni.navigateTo({
 					url:'/subpkg/goods_list/goods_list?cid=' + item3.cat_id
+				})
+			},
+			searchHandler () {
+				uni.navigateTo({
+					url: '/subpkg/search/search'
 				})
 			}
 		}
