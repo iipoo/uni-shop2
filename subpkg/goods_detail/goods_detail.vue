@@ -26,7 +26,7 @@
 			</view>
 			<!-- 商品信息运费 -->
 			<view class="yf">
-				运费：免运费
+				运费：免运费 {{total}}
 			</view>
 		</view>
 		<!-- 商品下方介绍 -->
@@ -38,67 +38,102 @@
 		</view>
 	</view>
 </template>
-
 <script>
+	import { mapState, mapMutations, mapGetters } from 'vuex'
 	export default {
+		computed: {
+			...mapState('cart', ['cart']),
+			...mapGetters('cart', ['total'])
+		},
 		data() {
 			return {
 				goods_info: {},
 				// 自己做的解决双击预览图片报错的节流阀，不清楚有没有bug
 				isloading: false,
 				options: [{
-							icon: 'headphones',
-							text: '客服'
-						}, {
-							icon: 'shop',
-							text: '店铺',
-							// info: 2,
-							infoBackgroundColor:'#007aff',
-							// infoColor:"red"
-						}, {
-							icon: 'cart',
-							text: '购物车',
-							info: 2
-						}],
-					    buttonGroup: [{
-					      text: '加入购物车',
-					      backgroundColor: '#ff0000',
-					      color: '#fff'
-					    },
-					    {
-					      text: '立即购买',
-					      backgroundColor: '#ffa200',
-					      color: '#fff'
-					    }
-					    ]
+					icon: 'headphones',
+					text: '客服'
+				}, {
+					icon: 'shop',
+					text: '店铺',
+					// info: 2,
+					infoBackgroundColor: '#007aff',
+					// infoColor:"red"
+				}, {
+					icon: 'cart',
+					text: '购物车',
+					info: 0
+				}],
+				buttonGroup: [{
+						text: '加入购物车',
+						backgroundColor: '#ff0000',
+						color: '#fff'
+					},
+					{
+						text: '立即购买',
+						backgroundColor: '#ffa200',
+						color: '#fff'
+					}
+				]
 			};
 		},
 		onLoad(options) {
 			const goods_id = options.goods_id
 			this.getGoodsDetail(goods_id)
+			// this.options.find(item => item.text === '购物车') ? this.options.find(item => item.text === '购物车').info = this.total : ''
 		},
 		methods: {
+			...mapMutations('cart', ['addToCart']),
+			buttonClick (e) {
+				if (e.content.text === '加入购物车') {
+					const goods = {
+						goods_id: this.goods_info.goods_id,
+						goods_name: this.goods_info.goods_name,
+						goods_price: this.goods_info.goods_price,
+						goods_count: 1,
+						goods_small_logo: this.goods_info.goods_small_logo,
+						goods_state: true
+					}
+					this.addToCart(goods)
+					console.log(this.cart)
+				}
+			},
 			async getGoodsDetail(goods_id) {
-				const { data: res } = await uni.$http.get('/api/public/v1/goods/detail', {goods_id})
-				console.log(res)
+				const {
+					data: res
+				} = await uni.$http.get('/api/public/v1/goods/detail', {
+					goods_id
+				})
 				if (res.meta.status !== 200) return uni.$showMsg('请求异常')
-				res.message.goods_introduce = res.message.goods_introduce.replace(/<img /g, '<img style="display:block;"').replace(/.webp/g, '.jpg')
+				res.message.goods_introduce = res.message.goods_introduce.replace(/<img /g, '<img style="display:block;"')
+					.replace(/.webp/g, '.jpg')
 				this.goods_info = res.message
 			},
-			preview (index) {
+			preview(index) {
 				// 自己做的解决双击预览图片报错的节流阀，不清楚有没有bug
-				if(this.isloading) return
+				if (this.isloading) return
 				this.isloading = true
 				uni.previewImage({
 					current: index,
 					urls: this.goods_info.pics.map(item => item.pics_big_url)
 				})
 			},
-			onClick (e) {
-				if(e.content.text === '购物车') {
+			onClick(e) {
+				if (e.content.text === '购物车') {
 					uni.switchTab({
 						url: '/pages/cart/cart'
 					})
+				}
+			}
+		},
+		watch: {
+			total: {
+				immediate: true,
+				handler (newValue) {
+					const findResult = this.options.find(item => item.text === '购物车')
+					if (findResult) {
+						findResult.info = newValue
+					}
 				}
 			}
 		},
@@ -109,7 +144,79 @@
 		}
 	}
 </script>
+<!-- <script setup>
 
+	import { ref } from 'vue'
+	import { onLoad, onShow } from '@dcloudio/uni-app'
+	import { useCartStore } from '@/stores/cart.js'
+	const carts = useCartStore()
+	const goods_info = ref({})
+	// 自己做的解决双击预览图片报错的节流阀，不清楚有没有bug
+	const isloading = ref(false)
+	const options = [{
+		icon: 'headphones',
+		text: '客服'
+	}, {
+		icon: 'shop',
+		text: '店铺',
+		// info: 2,
+		infoBackgroundColor: '#007aff',
+		// infoColor:"red"
+	}, {
+		icon: 'cart',
+		text: '购物车',
+		info: 2
+	}]
+	const buttonGroup = [{
+			text: '加入购物车',
+			backgroundColor: '#ff0000',
+			color: '#fff'
+		},
+		{
+			text: '立即购买',
+			backgroundColor: '#ffa200',
+			color: '#fff'
+		}
+	]
+	onLoad((options) => {
+		const goods_id = options.goods_id
+		getGoodsDetail(goods_id)
+	})
+	const getGoodsDetail = async (goods_id) => {
+		const {
+			data: res
+		} = await uni.$http.get('/api/public/v1/goods/detail', {
+			goods_id
+		})
+		console.log(res)
+		if (res.meta.status !== 200) return uni.$showMsg('请求异常')
+		res.message.goods_introduce = res.message.goods_introduce.replace(/<img /g, '<img style="display:block;"')
+			.replace(/.webp/g, '.jpg')
+		goods_info.value = res.message
+	}
+	const preview = (index) => {
+		// 自己做的解决双击预览图片报错的节流阀，不清楚有没有bug
+		if (isloading.value) return
+		isloading.value = true
+		uni.previewImage({
+			current: index,
+			urls: goods_info.value.pics.map(item => item.pics_big_url)
+		})
+	}
+	const onClick = (e) => {
+		if (e.content.text === '购物车') {
+			uni.switchTab({
+				url: '/pages/cart/cart'
+			})
+		}
+	}
+	// 自己做的解决双击预览图片报错的节流阀，不清楚有没有bug
+	onShow(() => {
+		// 自己做的解决双击预览图片报错的节流阀，不清楚有没有bug
+		isloading.value = false
+	})
+</script>
+ -->
 <style lang="scss">
 .goods-detail-page {
 	padding-bottom: 50px;

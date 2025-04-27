@@ -16,6 +16,9 @@ app.$mount()
 // #ifdef VUE3
 import { createSSRApp } from 'vue'
 import App from './App.vue'
+import store from './store'
+import Vuex from "vuex"
+// import * as Pinia from 'pinia';
 
 // 导入网络请求的包
 import { $http } from '@escook/request-miniprogram'
@@ -44,8 +47,12 @@ uni.$showMsg = function (title = "数据加载中...", duration = 1500) {
 
 export function createApp() {
   const app = createSSRApp(App)
+	app.use(store)
+	// app.use(Pinia.createPinia());
   return {
-    app
+    app,
+		// Pinia
+		Vuex
   }
 }
 // #endif

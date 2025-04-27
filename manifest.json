@@ -54,7 +54,13 @@
         "setting" : {
             "urlCheck" : false
         },
-        "usingComponents" : true
+        "usingComponents" : true,
+				// 这一段是因为调用用户地址出错网上找的解决方案
+				"requiredPrivateInfos": [
+					"chooseAddress",
+					"getFuzzyLocation",
+					"choosePoi"
+				]
     },
     "vueVersion" : "3"
 }
